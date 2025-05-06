@@ -1,79 +1,136 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %> <%@taglib
+prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <html>
-<head>
+  <head>
     <title>我的借还</title>
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <script src="js/jquery-3.2.1.js"></script>
-    <script src="js/bootstrap.min.js" ></script>
+    <link rel="stylesheet" href="css/element.min.css" />
+    <script src="js/vue.min.js"></script>
+    <script src="js/element.min.js"></script>
+    <style>
+      .lend-container {
+        width: 90%;
+        margin: 20px auto;
+        padding: 20px;
+      }
+      .status-tag {
+        margin-right: 5px;
+      }
+    </style>
+  </head>
+  <body
+    background="img/lizhi.jpg"
+    style="
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      background-attachment: fixed;
+    "
+  >
+    <div id="header"></div>
+
+    <div id="app">
+      <el-card class="lend-container">
+        <div slot="header">
+          <span>我的借还记录</span>
+        </div>
+
+        <el-table :data="lendLogs" v-loading="loading" style="width: 100%">
+          <el-table-column prop="bookId" label="图书号"></el-table-column>
+          <el-table-column prop="lendDate" label="借出日期"></el-table-column>
+          <el-table-column prop="backDate" label="归还日期"></el-table-column>
+          <el-table-column label="状态">
+            <template slot-scope="scope">
+              <el-tag
+                :type="getStatusType(scope.row)"
+                size="small"
+                class="status-tag"
+              >
+                {{ getStatusText(scope.row) }}
+              </el-tag>
+              <el-tag
+                v-if="isOverdue(scope.row)"
+                type="danger"
+                size="small"
+                class="status-tag"
+              >
+                超期
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="120">
+            <template slot-scope="scope">
+              <el-button
+                v-if="!scope.row.backDate"
+                size="mini"
+                type="primary"
+                @click="handleReturn(scope.row)"
+              >
+                归还
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+    </div>
+
     <script>
-        $(function () {
-            $('#header').load('reader_header.html');
-        })
+      new Vue({
+        el: "#app",
+        data() {
+          return {
+            lendLogs: "${list}",
+            loading: false,
+          };
+        },
+        mounted() {
+          this.loadHeader();
+          this.checkMessage();
+        },
+        methods: {
+          loadHeader() {
+            fetch("reader_header.html")
+              .then((response) => response.text())
+              .then((html) => {
+                document.getElementById("header").innerHTML = html;
+              });
+          },
+          getStatusType(row) {
+            if (!row.backDate) {
+              return this.isOverdue(row) ? "danger" : "warning";
+            }
+            return "success";
+          },
+          getStatusText(row) {
+            if (!row.backDate) {
+              return "未还";
+            }
+            return "已还";
+          },
+          isOverdue(row) {
+            if (!row.backDate) {
+              const lendDate = new Date(row.lendDate);
+              const now = new Date();
+              // 假设借期为30天
+              return (now - lendDate) / (1000 * 60 * 60 * 24) > 30;
+            }
+            return false;
+          },
+          handleReturn(row) {
+            this.$confirm("确认归还这本书?", "提示", {
+              confirmButtonText: "确定",
+              cancelButtonText: "取消",
+              type: "warning",
+            }).then(() => {
+              window.location.href = `returnbook.html?bookId=${row.bookId}`;
+            });
+          },
+          checkMessage() {
+            const succ = "${succ}";
+            const error = "${error}";
+            if (succ) this.$message.success(succ);
+            if (error) this.$message.error(error);
+          },
+        },
+      });
     </script>
-</head>
-<body background="img/lizhi.jpg" style=" background-repeat:no-repeat ;
-background-size:100% 100%;
-background-attachment: fixed;">
-<div id="header"></div>
-<div style="position: relative;top: 10%">
-    <c:if test="${!empty succ}">
-        <div class="alert alert-success alert-dismissable">
-            <button type="button" class="close" data-dismiss="alert"
-                    aria-hidden="true">
-                &times;
-            </button>
-                ${succ}
-        </div>
-    </c:if>
-    <c:if test="${!empty error}">
-        <div class="alert alert-danger alert-dismissable">
-            <button type="button" class="close" data-dismiss="alert"
-                    aria-hidden="true">
-                &times;
-            </button>
-                ${error}
-        </div>
-    </c:if>
-</div>
-
-<div class="panel panel-default" style="width: 90%;margin-left: 5%;margin-top: 5%">
-    <div class="panel-heading">
-        <h3 class="panel-title">
-            我的借还日志
-        </h3>
-    </div>
-    <div class="panel-body">
-        <table class="table table-hover">
-            <thead>
-            <tr>
-                <th>图书号</th>
-                <th>借出日期</th>
-                <th>归还日期</th>
-                <th>状态</th>
-            </tr>
-            </thead>
-            <tbody>
-            <c:forEach items="${list}" var="alog">
-                <tr>
-                    <td><c:out value="${alog.bookId}"></c:out></td>
-                    <td><c:out value="${alog.lendDate}"></c:out></td>
-                    <td><c:out value="${alog.backDate}"></c:out></td>
-                    <c:if test="${empty alog.backDate}">
-                        <td>未还</td>
-                    </c:if>
-                    <c:if test="${!empty alog.backDate}">
-                        <td>已还</td>
-                    </c:if>
-                    <c:if test="">
-                        <td>超期</td>
-                    </c:if>
-                </tr>
-            </c:forEach>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-</body>
+  </body>
 </html>

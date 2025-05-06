@@ -1,80 +1,147 @@
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %> <%@taglib
+prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <html>
-<head>
-    <title>《 ${detail.name}》</title>
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <script src="js/jquery-3.2.1.js"></script>
-    <script src="js/bootstrap.min.js" ></script>
-    <script>
-        $(function () {
-            $('#header').load('reader_header.html');
-        })
-    </script>
-</head>
-<body background="img/lizhi.jpg" style=" background-repeat:no-repeat ;
-background-size:100% 100%;
-background-attachment: fixed;">
-<div id="header"></div>
-<div class="col-xs-6 col-md-offset-3" style="position: relative;top: 3%">
-    <div class="panel panel-primary">
-        <div class="panel-heading">
-            <h3 class="panel-title">《 ${detail.name}》</h3>
-        </div>
-        <div class="panel-body">
-            <table class="table table-hover">
-                <tr>
-                    <th width="15%">书名</th>
-                    <td>${detail.name}</td>
-                </tr>
-                <tr>
-                    <th>作者</th>
-                    <td>${detail.author}</td>
-                </tr>
-                <tr>
-                    <th>出版社</th>
-                    <td>${detail.publish}</td>
-                </tr>
-                <tr>
-                    <th>ISBN</th>
-                    <td>${detail.isbn}</td>
-                </tr>
-                <tr>
-                    <th>简介</th>
-                    <td>${detail.introduction}</td>
-                </tr>
-                <tr>
-                    <th>语言</th>
-                    <td>${detail.language}</td>
-                </tr>
-                <tr>
-                    <th>价格</th>
-                    <td>${detail.price}</td>
-                </tr>
-                <tr>
-                    <th>出版日期</th>
-                    <td>${detail.pubdate}</td>
-                </tr>
-                <tr>
-                    <th>分类号</th>
-                    <td>${detail.classId}</td>
-                </tr>
-                <tr>
-                    <th>状态</th>
-                    <c:if test="${detail.number>1}">
-                        <td>在馆</td>
-                    </c:if>
-                    <c:if test="${detail.number==0}">
-                        <td>借出</td>
-                    </c:if>
+  <head>
+    <title>《${detail.name}》详情</title>
+    <link rel="stylesheet" href="css/element.min.css" />
+    <script src="js/vue.min.js"></script>
+    <script src="js/element.min.js"></script>
+    <style>
+      .detail-container {
+        width: 80%;
+        margin: 20px auto;
+        padding: 20px;
+      }
+      .book-info {
+        margin-top: 20px;
+      }
+      .operation-buttons {
+        margin-top: 20px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body
+    background="img/lizhi.jpg"
+    style="
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      background-attachment: fixed;
+    "
+  >
+    <div id="header"></div>
 
-                </tr>
-                </tbody>
-            </table>
+    <div id="app">
+      <el-card class="detail-container">
+        <div slot="header">
+          <span>《{{ bookInfo.name }}》详情</span>
         </div>
+
+        <el-descriptions class="book-info" :column="1" border>
+          <el-descriptions-item label="书名">
+            {{ bookInfo.name }}
+          </el-descriptions-item>
+          <el-descriptions-item label="作者">
+            {{ bookInfo.author }}
+          </el-descriptions-item>
+          <el-descriptions-item label="出版社">
+            {{ bookInfo.publish }}
+          </el-descriptions-item>
+          <el-descriptions-item label="ISBN">
+            {{ bookInfo.isbn }}
+          </el-descriptions-item>
+          <el-descriptions-item label="简介">
+            {{ bookInfo.introduction }}
+          </el-descriptions-item>
+          <el-descriptions-item label="语言">
+            {{ bookInfo.language }}
+          </el-descriptions-item>
+          <el-descriptions-item label="价格">
+            {{ bookInfo.price }}
+          </el-descriptions-item>
+          <el-descriptions-item label="出版日期">
+            {{ formatDate(bookInfo.pubdate) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="分类号">
+            {{ bookInfo.classId }}
+          </el-descriptions-item>
+          <el-descriptions-item label="数量">
+            {{ bookInfo.number }}
+          </el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="bookInfo.number > 0 ? 'success' : 'danger'">
+              {{ bookInfo.number > 0 ? "在馆" : "借出" }}
+            </el-tag>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <div class="operation-buttons">
+          <el-button
+            v-if="!isBookBorrowed && bookInfo.number > 0"
+            type="primary"
+            @click="handleBorrow"
+          >
+            借阅
+          </el-button>
+          <el-button v-if="isBookBorrowed" type="danger" @click="handleReturn">
+            归还
+          </el-button>
+          <el-button @click="goBack">返回</el-button>
+        </div>
+      </el-card>
     </div>
 
-</div>
-
-</body>
+    <script>
+      new Vue({
+        el: "#app",
+        data() {
+          return {
+            bookInfo: "${detail}",
+            isBookBorrowed: "${myLendList}.includes(${detail.bookId})",
+          };
+        },
+        mounted() {
+          this.loadHeader();
+        },
+        methods: {
+          loadHeader() {
+            fetch("reader_header.html")
+              .then((response) => response.text())
+              .then((html) => {
+                document.getElementById("header").innerHTML = html;
+              });
+          },
+          formatDate(date) {
+            if (!date) return "";
+            const d = new Date(date);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+              2,
+              "0"
+            )}-${String(d.getDate()).padStart(2, "0")}`;
+          },
+          handleBorrow() {
+            this.$confirm("确认借阅这本书?", "提示", {
+              confirmButtonText: "确定",
+              cancelButtonText: "取消",
+              type: "info",
+            }).then(() => {
+              window.location.href = `lendbook.html?bookId=${this.bookInfo.bookId}`;
+            });
+          },
+          handleReturn() {
+            this.$confirm("确认归还这本书?", "提示", {
+              confirmButtonText: "确定",
+              cancelButtonText: "取消",
+              type: "info",
+            }).then(() => {
+              window.location.href = `returnbook.html?bookId=${this.bookInfo.bookId}`;
+            });
+          },
+          goBack() {
+            window.history.back();
+          },
+        },
+      });
+    </script>
+  </body>
 </html>

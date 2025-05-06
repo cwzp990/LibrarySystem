@@ -1,83 +1,138 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %> <%@taglib
+prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <html>
-<head>
+  <head>
     <title>全部读者</title>
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <script src="js/jquery-3.2.1.js"></script>
-    <script src="js/bootstrap.min.js" ></script>
+    <link rel="stylesheet" href="css/element.min.css" />
+    <script src="js/vue.min.js"></script>
+    <script src="js/element.min.js"></script>
+    <style>
+      .reader-container {
+        width: 90%;
+        margin: 20px auto;
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body
+    background="img/u1.jpg"
+    style="
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      background-attachment: fixed;
+    "
+  >
+    <div id="header"></div>
+
+    <div id="app">
+      <el-card class="reader-container">
+        <div slot="header">
+          <span>全部读者</span>
+          <el-button
+            style="float: right; padding: 3px 0"
+            type="text"
+            @click="$router.push('/reader_add.html')"
+          >
+            添加读者
+          </el-button>
+        </div>
+
+        <el-table :data="readers" v-loading="loading" style="width: 100%">
+          <el-table-column prop="readerId" label="读者号"></el-table-column>
+          <el-table-column prop="name" label="姓名"></el-table-column>
+          <el-table-column prop="sex" label="性别"></el-table-column>
+          <el-table-column prop="birth" label="生日">
+            <template slot-scope="scope">
+              {{ formatDate(scope.row.birth) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="address" label="地址"></el-table-column>
+          <el-table-column prop="phone" label="电话"></el-table-column>
+          <el-table-column label="操作" width="200">
+            <template slot-scope="scope">
+              <el-button
+                size="mini"
+                type="primary"
+                @click="handleEdit(scope.row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                size="mini"
+                type="danger"
+                @click="handleDelete(scope.row)"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+    </div>
+
     <script>
-        $(function () {
-            $('#header').load('admin_header.html');
-        })
+      new Vue({
+        el: "#app",
+        data() {
+          return {
+            readers: "${readers}",
+            loading: false,
+          };
+        },
+        mounted() {
+          this.loadHeader();
+          this.checkMessage();
+        },
+        methods: {
+          loadHeader() {
+            fetch("admin_header.html")
+              .then((response) => response.text())
+              .then((html) => {
+                document.getElementById("header").innerHTML = html;
+              });
+          },
+          formatDate(date) {
+            if (!date) return "";
+            const d = new Date(date);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+              2,
+              "0"
+            )}-${String(d.getDate()).padStart(2, "0")}`;
+          },
+          handleEdit(row) {
+            window.location.href = `reader_edit.html?readerId=${row.readerId}`;
+          },
+          handleDelete(row) {
+            this.$confirm("确认删除该读者?", "提示", {
+              confirmButtonText: "确定",
+              cancelButtonText: "取消",
+              type: "warning",
+            }).then(() => {
+              fetch(`reader_delete.html?readerId=${row.readerId}`)
+                .then((response) => response.json())
+                .then((data) => {
+                  if (data.success) {
+                    this.$message.success("删除成功");
+                    this.readers = this.readers.filter(
+                      (reader) => reader.readerId !== row.readerId
+                    );
+                  } else {
+                    this.$message.error(data.message || "删除失败");
+                  }
+                })
+                .catch(() => {
+                  this.$message.error("系统错误，请稍后重试");
+                });
+            });
+          },
+          checkMessage() {
+            const succ = "${succ}";
+            const error = "${error}";
+            if (succ) this.$message.success(succ);
+            if (error) this.$message.error(error);
+          },
+        },
+      });
     </script>
-</head>
-<body background="img/u1.jpg" style=" background-repeat:no-repeat ;
-background-size:100% 100%;
-background-attachment: fixed;">
-<div id="header"></div>
-<c:if test="${!empty info}">
-    <script>alert("${info}");window.location.href="allreaders.html"</script>
-</c:if>
-
-<div style="position: relative;top: 15%">
-<c:if test="${!empty succ}">
-    <div class="alert alert-success alert-dismissable">
-        <button type="button" class="close" data-dismiss="alert"
-                aria-hidden="true">
-            &times;
-        </button>
-            ${succ}
-    </div>
-</c:if>
-<c:if test="${!empty error}">
-    <div class="alert alert-danger alert-dismissable">
-        <button type="button" class="close" data-dismiss="alert"
-                aria-hidden="true">
-            &times;
-        </button>
-            ${error}
-    </div>
-</c:if>
-</div>
-
-
-<div class="panel panel-default" style="position:relative;top: 80px;width: 90%;margin-left: 5%">
-    <div class="panel-heading">
-        <h3 class="panel-title">
-            全部读者
-        </h3>
-    </div>
-    <div class="panel-body">
-        <table class="table table-hover" >
-            <thead>
-            <tr>
-                <th>读者号</th>
-                <th>姓名</th>
-                <th>性别</th>
-                <th>生日</th>
-                <th>地址</th>
-                <th>电话</th>
-                <th>编辑</th>
-                <th>删除</th>
-            </tr>
-            </thead>
-            <tbody>
-            <c:forEach items="${readers}" var="reader">
-                <tr>
-                    <td><c:out value="${reader.readerId}"></c:out></td>
-                    <td><c:out value="${reader.name}"></c:out></td>
-                    <td><c:out value="${reader.sex}"></c:out></td>
-                    <td><c:out value="${reader.birth}"></c:out></td>
-                    <td><c:out value="${reader.address}"></c:out></td>
-                    <td><c:out value="${reader.phone}"></c:out></td>
-                    <td><a href="reader_edit.html?readerId=<c:out value="${reader.readerId}"></c:out>"><button type="button" class="btn btn-info btn-xs">编辑</button></a></td>
-                    <td><a href="reader_delete.html?readerId=<c:out value="${reader.readerId}"></c:out>"><button type="button" class="btn btn-danger btn-xs">删除</button></a></td>
-                </tr>
-            </c:forEach>
-            </tbody>
-        </table>
-    </div>
-</div>
-</body>
+  </body>
 </html>

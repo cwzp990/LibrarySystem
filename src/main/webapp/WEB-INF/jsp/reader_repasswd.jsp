@@ -1,85 +1,172 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %> <%@taglib
+prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <html>
-<head>
+  <head>
     <title>${readercard.name}的主页</title>
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <script src="js/jquery-3.2.1.js"></script>
-    <script src="js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="css/element.min.css" />
+    <script src="js/vue.min.js"></script>
+    <script src="js/element.min.js"></script>
+    <style>
+      .password-container {
+        width: 500px;
+        margin: 50px auto;
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body
+    background="img/lizhi.jpg"
+    style="
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      background-attachment: fixed;
+    "
+  >
+    <div id="header"></div>
+
+    <div id="app">
+      <el-card class="password-container">
+        <div slot="header">
+          <span>密码修改</span>
+        </div>
+
+        <el-form
+          :model="passwordForm"
+          :rules="rules"
+          ref="passwordForm"
+          label-width="100px"
+          v-loading="loading"
+        >
+          <el-form-item label="旧密码" prop="oldPasswd">
+            <el-input
+              v-model="passwordForm.oldPasswd"
+              type="password"
+              show-password
+              placeholder="请输入旧密码"
+            >
+            </el-input>
+          </el-form-item>
+
+          <el-form-item label="新密码" prop="newPasswd">
+            <el-input
+              v-model="passwordForm.newPasswd"
+              type="password"
+              show-password
+              placeholder="请输入新密码"
+            >
+            </el-input>
+          </el-form-item>
+
+          <el-form-item label="确认密码" prop="reNewPasswd">
+            <el-input
+              v-model="passwordForm.reNewPasswd"
+              type="password"
+              show-password
+              placeholder="请再次输入新密码"
+            >
+            </el-input>
+          </el-form-item>
+
+          <el-form-item>
+            <el-button
+              type="primary"
+              @click="submitForm('passwordForm')"
+              :loading="loading"
+            >
+              提交修改
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+    </div>
+
     <script>
-        $(function () {
-            $('#header').load('reader_header.html');
-        })
+      new Vue({
+        el: "#app",
+        data() {
+          const validatePass2 = (rule, value, callback) => {
+            if (value !== this.passwordForm.newPasswd) {
+              callback(new Error("两次输入的密码不一致!"));
+            } else {
+              callback();
+            }
+          };
+          return {
+            loading: false,
+            passwordForm: {
+              oldPasswd: "",
+              newPasswd: "",
+              reNewPasswd: "",
+            },
+            rules: {
+              oldPasswd: [
+                { required: true, message: "请输入旧密码", trigger: "blur" },
+              ],
+              newPasswd: [
+                { required: true, message: "请输入新密码", trigger: "blur" },
+                { min: 6, message: "密码长度不能小于6个字符", trigger: "blur" },
+              ],
+              reNewPasswd: [
+                {
+                  required: true,
+                  message: "请再次输入新密码",
+                  trigger: "blur",
+                },
+                { validator: validatePass2, trigger: "blur" },
+              ],
+            },
+          };
+        },
+        mounted() {
+          this.loadHeader();
+          this.checkMessage();
+        },
+        methods: {
+          loadHeader() {
+            fetch("reader_header.html")
+              .then((response) => response.text())
+              .then((html) => {
+                document.getElementById("header").innerHTML = html;
+              });
+          },
+          submitForm(formName) {
+            this.$refs[formName].validate((valid) => {
+              if (valid) {
+                this.loading = true;
+                const formData = new FormData();
+                Object.keys(this.passwordForm).forEach((key) => {
+                  formData.append(key, this.passwordForm[key]);
+                });
+
+                fetch("reader_repasswd_do", {
+                  method: "POST",
+                  body: formData,
+                })
+                  .then((response) => response.json())
+                  .then((data) => {
+                    this.loading = false;
+                    if (data.success) {
+                      this.$message.success("密码修改成功");
+                      this.$refs[formName].resetFields();
+                    } else {
+                      this.$message.error(data.message || "密码修改失败");
+                    }
+                  })
+                  .catch(() => {
+                    this.loading = false;
+                    this.$message.error("系统错误，请稍后重试");
+                  });
+              }
+            });
+          },
+          checkMessage() {
+            const succ = "${succ}";
+            const error = "${error}";
+            if (succ) this.$message.success(succ);
+            if (error) this.$message.error(error);
+          },
+        },
+      });
     </script>
-</head>
-<body background="img/lizhi.jpg" style=" background-repeat:no-repeat ;
-background-size:100% 100%;
-background-attachment: fixed;">
-<div id="header"></div>
-<c:if test="${!empty succ}">
-    <div class="alert alert-success alert-dismissable">
-        <button type="button" class="close" data-dismiss="alert"
-                aria-hidden="true">
-            &times;
-        </button>
-            ${succ}
-    </div>
-</c:if>
-<c:if test="${!empty error}">
-    <div class="alert alert-danger alert-dismissable">
-        <button type="button" class="close" data-dismiss="alert"
-                aria-hidden="true">
-            &times;
-        </button>
-            ${error}
-    </div>
-</c:if>
-
-<div class="col-xs-6 col-md-offset-3" style="position: relative;">
-    <div class="panel panel-primary ">
-        <div class="panel-heading">
-            <h3 class="panel-title">密码修改</h3>
-        </div>
-        <div class="panel-body">
-            <form method="post" action="reader_repasswd_do" class="form-inline" id="repasswd">
-                <div class="input-group">
-                    <input type="password" id="oldPasswd" name="oldPasswd" placeholder="输入旧密码" class="form-control"
-                           class="form-control">
-                    <input type="password" id="newPasswd" name="newPasswd" placeholder="输入新密码" class="form-control"
-                           class="form-control">
-                    <input type="password" id="reNewPasswd" name="reNewPasswd" placeholder="再次输入新密码"
-                           class="form-control" class="form-control">
-                    <em id="tishi" style="color: red"></em>
-                    <br/>
-                    <span>
-                            <input type="submit" value="提交" class="btn btn-default">
-            </span>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-    $(document).keyup(function () {
-        if ($("#newPasswd").val() != $("#reNewPasswd").val() && $("#newPasswd").val() != "" && $("#reNewPasswd").val() != "" && $("#newPasswd").val().length == $("#reNewPasswd").val().length) {
-            $("#tishi").text("提示:两次输入的新密码不同，请检查!");
-        } else {
-            $("#tishi").text("");
-        }
-    })
-
-    $("#repasswd").submit(function () {
-        if ($("#oldPasswd").val() == '' || $("#newPasswd").val() == '' || $("#reNewPasswd").val() == '') {
-            $("#tishi").text("提示:请填写完整!");
-            return false;
-        } else if ($("#newPasswd").val() != $("#reNewPasswd").val()) {
-            $("#tishi").text("提示:两次输入的新密码不同，请检查!");
-            return false;
-        }
-    })
-</script>
-
-
-</body>
+  </body>
 </html>

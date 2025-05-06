@@ -1,84 +1,258 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
-<head>
-    <title>编辑《 ${detail.name}》</title>
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <script src="js/jquery-3.2.1.js"></script>
-    <script src="js/bootstrap.min.js" ></script>
-    <script>
-        $(function () {
-            $('#header').load('admin_header.html');
-        })
-    </script>
-</head>
-<body background="../../static/img/book2.jpg" style=" background-repeat:no-repeat ;
-background-size:100% 100%;
-background-attachment: fixed;">
+  <head>
+    <title>编辑图书信息</title>
+    <link rel="stylesheet" href="css/element.min.css" />
+    <script src="js/vue.min.js"></script>
+    <script src="js/element.min.js"></script>
+    <style>
+      .form-container {
+        width: 80%;
+        margin: 20px auto;
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body
+    background="img/book2.jpg"
+    style="
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      background-attachment: fixed;
+    "
+  >
+    <div id="header"></div>
 
-<div id="header" style="padding-bottom: 80px"></div>
-
-<div class="col-xs-6 col-md-offset-3" style="position: relative;">
-    <div class="panel panel-primary">
-        <div class="panel-heading">
-            <h3 class="panel-title">编辑《 ${detail.name}》</h3>
+    <div id="app">
+      <el-card class="form-container">
+        <div slot="header">
+          <span>编辑图书 - {{ bookInfo.name }}</span>
         </div>
-        <div class="panel-body">
-            <form action="book_edit_do.html?bookId=${detail.bookId}" method="post" id="addbook" >
 
-                <div class="input-group">
-                    <span  class="input-group-addon">书名</span>
-                    <input type="text" class="form-control" name="name" id="name" value="${detail.name}">
-                </div>
-                <div class="input-group">
-                    <span class="input-group-addon">作者</span>
-                    <input type="text" class="form-control" name="author" id="author" value="${detail.author}" >
-                </div>
-                <div class="input-group">
-                    <span  class="input-group-addon">出版社</span>
-                    <input type="text" class="form-control" name="publish" id="publish"  value="${detail.publish}" >
-                </div>
-                <div class="input-group">
-                    <span class="input-group-addon">ISBN</span>
-                    <input type="text" class="form-control" name="isbn" id="isbn"  value="${detail.isbn}" >
-                </div>
-                <div class="input-group">
-                    <span  class="input-group-addon">简介</span>
-                    <input type="text" class="form-control" name="introduction" id="introduction"  value="${detail.introduction}" >
-                </div>
-                <div class="input-group">
-                    <span class="input-group-addon">语言</span>
-                    <input type="text" class="form-control" name="language" id="language" value="${detail.language}" >
-                </div>
-                <div class="input-group">
-                    <span  class="input-group-addon">价格</span>
-                    <input type="text" class="form-control" name="price"  id="price" value="${detail.price}">
-                </div>
-                <div class="input-group">
-                    <span class="input-group-addon">出版日期</span>
-                    <input type="date" class="form-control" name="pubstr" id="pubstr" value="${detail.pubdate}">
-                </div>
-                <div class="input-group">
-                    <span  class="input-group-addon">分类号</span>
-                    <input type="text" class="form-control" name="classId" id="classId" value="${detail.classId}">
-                </div>
-                <div class="input-group">
-                    <span  class="input-group-addon">数量</span>
-                    <input type="text" class="form-control" name="number"  id="number" value="${detail.number}">
-                </div>
-                <input type="submit" value="确定" class="btn btn-success btn-sm" class="text-left">
-                <script>
-                    $("#addbook").submit(function () {
-                        if($("#name").val()==''||$("#author").val()==''||$("#publish").val()==''||$("#isbn").val()==''||$("#introduction").val()==''||$("#language").val()==''||$("#price").val()==''||$("#pubstr").val()==''||$("#classId").val()==''||$("#number").val()==''){
-                            alert("请填入完整图书信息！");
-                            return false;
-                        }
-                    })
-                </script>
-            </form>
-        </div>
+        <el-form
+          :model="bookForm"
+          :rules="rules"
+          ref="bookForm"
+          label-width="100px"
+          v-loading="loading"
+        >
+          <el-form-item label="书名" prop="name">
+            <el-input
+              v-model="bookForm.name"
+              placeholder="请输入书名"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item label="作者" prop="author">
+            <el-input
+              v-model="bookForm.author"
+              placeholder="请输入作者"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item label="出版社" prop="publish">
+            <el-input
+              v-model="bookForm.publish"
+              placeholder="请输入出版社"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item label="ISBN" prop="isbn">
+            <el-input
+              v-model="bookForm.isbn"
+              placeholder="请输入ISBN"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item label="简介" prop="introduction">
+            <el-input
+              type="textarea"
+              v-model="bookForm.introduction"
+              :rows="3"
+              placeholder="请输入简介"
+            >
+            </el-input>
+          </el-form-item>
+
+          <el-form-item label="语言" prop="language">
+            <el-input
+              v-model="bookForm.language"
+              placeholder="请输入语言"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item label="价格" prop="price">
+            <el-input-number
+              v-model="bookForm.price"
+              :precision="2"
+              :step="0.1"
+              :min="0"
+            >
+            </el-input-number>
+          </el-form-item>
+
+          <el-form-item label="出版日期" prop="pubdate">
+            <el-date-picker
+              v-model="bookForm.pubdate"
+              type="date"
+              placeholder="选择出版日期"
+            >
+            </el-date-picker>
+          </el-form-item>
+
+          <el-form-item label="分类号" prop="classId">
+            <el-input
+              v-model="bookForm.classId"
+              placeholder="请输入分类号"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item label="数量" prop="number">
+            <el-input-number v-model="bookForm.number" :min="0" :step="1">
+            </el-input-number>
+          </el-form-item>
+
+          <el-form-item>
+            <el-button
+              type="primary"
+              @click="submitForm('bookForm')"
+              :loading="loading"
+            >
+              保存
+            </el-button>
+            <el-button @click="goBack">返回</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
     </div>
 
-</div>
+    <script>
+      new Vue({
+        el: "#app",
+        data() {
+          return {
+            loading: false,
+            bookInfo: "${detail}",
+            bookForm: {
+              name: "",
+              author: "",
+              publish: "",
+              isbn: "",
+              introduction: "",
+              language: "",
+              price: 0,
+              pubdate: "",
+              classId: "",
+              number: 0,
+            },
+            rules: {
+              name: [
+                { required: true, message: "请输入书名", trigger: "blur" },
+              ],
+              author: [
+                { required: true, message: "请输入作者", trigger: "blur" },
+              ],
+              publish: [
+                { required: true, message: "请输入出版社", trigger: "blur" },
+              ],
+              isbn: [
+                { required: true, message: "请输入ISBN", trigger: "blur" },
+              ],
+              introduction: [
+                { required: true, message: "请输入简介", trigger: "blur" },
+              ],
+              language: [
+                { required: true, message: "请输入语言", trigger: "blur" },
+              ],
+              price: [
+                { required: true, message: "请输入价格", trigger: "blur" },
+              ],
+              pubdate: [
+                {
+                  required: true,
+                  message: "请选择出版日期",
+                  trigger: "change",
+                },
+              ],
+              classId: [
+                { required: true, message: "请输入分类号", trigger: "blur" },
+              ],
+              number: [
+                { required: true, message: "请输入数量", trigger: "blur" },
+              ],
+            },
+          };
+        },
+        mounted() {
+          this.loadHeader();
+          this.initForm();
+        },
+        methods: {
+          loadHeader() {
+            fetch("admin_header.html")
+              .then((response) => response.text())
+              .then((html) => {
+                document.getElementById("header").innerHTML = html;
+              });
+          },
+          initForm() {
+            Object.keys(this.bookForm).forEach((key) => {
+              if (key === "pubdate") {
+                this.bookForm[key] = new Date(this.bookInfo[key]);
+              } else {
+                this.bookForm[key] = this.bookInfo[key];
+              }
+            });
+          },
+          submitForm(formName) {
+            this.$refs[formName].validate((valid) => {
+              if (valid) {
+                this.loading = true;
+                const formData = new FormData();
+                Object.keys(this.bookForm).forEach((key) => {
+                  let value = this.bookForm[key];
+                  if (key === "pubdate") {
+                    value = this.formatDate(value);
+                  }
+                  formData.append(key, value);
+                });
 
-</body>
+                fetch(`book_edit_do.html?bookId=${this.bookInfo.bookId}`, {
+                  method: "POST",
+                  body: formData,
+                })
+                  .then((response) => response.json())
+                  .then((data) => {
+                    this.loading = false;
+                    if (data.success) {
+                      this.$message.success("修改成功");
+                      setTimeout(() => {
+                        this.goBack();
+                      }, 1500);
+                    } else {
+                      this.$message.error(data.message || "修改失败");
+                    }
+                  })
+                  .catch(() => {
+                    this.loading = false;
+                    this.$message.error("系统错误，请稍后重试");
+                  });
+              }
+            });
+          },
+          formatDate(date) {
+            if (!date) return "";
+            const d = new Date(date);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+              2,
+              "0"
+            )}-${String(d.getDate()).padStart(2, "0")}`;
+          },
+          goBack() {
+            window.history.back();
+          },
+        },
+      });
+    </script>
+  </body>
 </html>

@@ -1,109 +1,102 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>404 Not Find:(</title>
+  <head>
+    <meta charset="utf-8" />
+    <title>404 Not Found</title>
+    <link rel="stylesheet" href="css/element.min.css" />
+    <script src="js/vue.min.js"></script>
+    <script src="js/element.min.js"></script>
     <style>
-        ::-moz-selection {
-            background: #b3d4fc;
-            text-shadow: none;
-        }
-
-        ::selection {
-            background: #b3d4fc;
-            text-shadow: none;
-        }
-
-        html {
-            padding: 30px 10px;
-            font-size: 20px;
-            line-height: 1.4;
-            color: #737373;
-            background: #f0f0f0;
-            -webkit-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
-        }
-
-        html,
-        input {
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            max-width: 500px;
-            _width: 500px;
-            padding: 30px 20px 50px;
-            border: 1px solid #b3b3b3;
-            border-radius: 4px;
-            margin: 0 auto;
-            box-shadow: 0 1px 10px #a7a7a7, inset 0 1px 0 #fff;
-            background: #fcfcfc;
-        }
-
-        h1 {
-            margin: 0 10px;
-            font-size: 50px;
-            text-align: center;
-        }
-
-        h1 span {
-            color: #bbb;
-        }
-
-        h3 {
-            margin: 1.5em 0 0.5em;
-        }
-
-        p {
-            margin: 1em 0;
-        }
-
-        ul {
-            padding: 0 0 0 40px;
-            margin: 1em 0;
-        }
-
-        .container {
-            max-width: 380px;
-            _width: 380px;
-            margin: 16% auto;
-            text-align: center;
-        }
-
-        #goog-fixurl ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        #goog-fixurl form {
-            margin: 0;
-        }
-
-        input::-moz-focus-inner {
-            padding: 0;
-            border: 0;
-        }
+      .error-container {
+        max-width: 500px;
+        margin: 10% auto;
+        padding: 30px;
+        text-align: center;
+        background: #fff;
+        border-radius: 4px;
+        box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+      }
+      .error-title {
+        font-size: 72px;
+        color: #303133;
+        margin-bottom: 20px;
+      }
+      .error-face {
+        color: #909399;
+        font-size: 50px;
+      }
+      .error-desc {
+        font-size: 16px;
+        color: #606266;
+        margin: 20px 0;
+      }
+      .countdown {
+        color: #409eff;
+        font-weight: bold;
+      }
     </style>
-</head>
-<body>
-<div class="container">
-    <h1>404 Not Find<span>:(</span></h1>
-    <p>对不起，您访问的页面不存在~</p>
-    <p>请输入正确的地址</p>
-    <p><em id="num">3</em>秒后，自动跳转到上一页</p>
+  </head>
+  <body style="background-color: #f0f0f0">
+    <div id="app">
+      <el-card class="error-container">
+        <div class="error-title">
+          404
+          <span class="error-face">:(</span>
+        </div>
+
+        <el-result
+          icon="error"
+          title="页面不存在"
+          sub-title="对不起，您访问的页面不存在"
+        >
+          <template slot="extra">
+            <p class="error-desc">
+              请输入正确的地址，
+              <span class="countdown">{{ countdown }}</span>
+              秒后自动返回上一页
+            </p>
+            <el-button type="primary" @click="goBack"> 立即返回 </el-button>
+          </template>
+        </el-result>
+      </el-card>
+    </div>
+
     <script>
-        var i =3;
-        function djs() {
-            if(i==0){
-                window.history.back();
+      new Vue({
+        el: "#app",
+        data() {
+          return {
+            countdown: 3,
+            timer: null,
+          };
+        },
+        created() {
+          this.startCountdown();
+        },
+        beforeDestroy() {
+          if (this.timer) {
+            clearInterval(this.timer);
+          }
+        },
+        methods: {
+          startCountdown() {
+            this.timer = setInterval(() => {
+              if (this.countdown > 0) {
+                this.countdown--;
+              } else {
+                this.goBack();
+              }
+            }, 1000);
+          },
+          goBack() {
+            if (this.timer) {
+              clearInterval(this.timer);
             }
-            document.getElementById("num").innerText=i--;
-            setTimeout("djs()",1000);
-        }
-        djs();
+            window.history.back();
+          },
+        },
+      });
     </script>
-</div>
-</body>
+  </body>
 </html>
